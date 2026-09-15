@@ -1,12 +1,21 @@
-HyS Control de Trabajos - Android
+HyS Control de Trabajos
 
-Proyecto Android listo para compilar.
-Incluye:
-- Aplicación offline basada en la versión aprobada.
-- Datos guardados localmente en el teléfono mediante localStorage.
-- Micrófono Android nativo para dictado en español (México).
-- Generación de RTF guardado en Descargas/HyS.
-- Icono y marca HyS Tecnologías.
+Aplicación Android para registrar trabajos realizados, importe y estado.
 
-Compilación local: Android Studio -> Open -> seleccionar esta carpeta -> Build APK.
-Compilación GitHub: subir el proyecto a un repositorio y ejecutar la acción "Build APK".
+Funciones:
+- Nuevo trabajo
+- Fecha
+- Área o lugar
+- Trabajo realizado
+- Dictado por voz
+- Importe
+- Estado: Pendiente / Terminado / Cancelado
+- Total facturable de trabajos terminados
+- Exportar reporte compatible con Word (RTF)
+- Datos guardados en el teléfono
+- Encabezado con logo oficial HyS Tecnologías
+
+Lema: Tecnología, servicio y confianza.
+S.D.G. — Proverbios 1:7
+
+Versión: 1.0
