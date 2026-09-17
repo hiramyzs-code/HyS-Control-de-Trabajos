@@ -9,23 +9,47 @@ public partial class MainWindow : Window
 {
     public ObservableCollection<Job> Jobs { get; } = new();
     public AuthSession Session { get; }
+    private readonly SupabaseJobRepository repository;
 
     public MainWindow(AuthSession session)
     {
         Session = session;
+        repository = new SupabaseJobRepository(session);
         InitializeComponent();
         JobsGrid.ItemsSource = Jobs;
-        RefreshTotal();
         Title = $"HyS Control de Trabajos - {Session.User.Email}";
+        Loaded += async (_, _) => await LoadJobsAsync();
     }
 
-    private void NewJob_Click(object sender, RoutedEventArgs e)
+    private async Task LoadJobsAsync()
+    {
+        try
+        {
+            var cloudJobs = await repository.GetAllAsync();
+            Jobs.Clear();
+            foreach (var job in cloudJobs) Jobs.Add(job);
+            RefreshTotal();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("No se pudieron cargar los trabajos de la nube.\n\n" + ex.Message, "HyS", MessageBoxButton.OK, MessageBoxImage.Warning);
+            RefreshTotal();
+        }
+    }
+
+    private async void NewJob_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new JobDialog { Owner = this };
-        if (dialog.ShowDialog() == true && dialog.Result != null)
+        if (dialog.ShowDialog() != true || dialog.Result is null) return;
+        try
         {
-            Jobs.Insert(0, dialog.Result);
+            var saved = await repository.AddAsync(dialog.Result);
+            Jobs.Insert(0, saved);
             RefreshTotal();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("No se pudo guardar el trabajo en Supabase. No se agregó a la lista para evitar diferencias entre equipos.\n\n" + ex.Message, "HyS", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
