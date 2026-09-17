@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace HyS.ControlTrabajos.Data;
@@ -27,16 +26,7 @@ internal sealed class SupabaseJobRepository
 
     public async Task<Job> AddAsync(Job job)
     {
-        var row = new JobWriteRow
-        {
-            UserId = session.User.Id,
-            WorkDate = ParseDate(job.Date),
-            Area = job.Area,
-            Work = job.Work,
-            Amount = job.Amount,
-            Status = job.Status,
-            Source = "windows"
-        };
+        var row = ToWriteRow(job);
         using var request = new HttpRequestMessage(HttpMethod.Post, "/rest/v1/jobs") { Content = JsonContent.Create(row) };
         request.Headers.Add("Prefer", "return=representation");
         using var response = await http.SendAsync(request);
@@ -44,6 +34,37 @@ internal sealed class SupabaseJobRepository
         var created = await response.Content.ReadFromJsonAsync<List<JobRow>>() ?? new();
         return created.Count > 0 ? ToJob(created[0]) : job;
     }
+
+    public async Task<Job> UpdateAsync(Job job)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Patch, $"/rest/v1/jobs?id=eq.{job.Id}&user_id=eq.{session.User.Id}")
+        {
+            Content = JsonContent.Create(ToWriteRow(job))
+        };
+        request.Headers.Add("Prefer", "return=representation");
+        using var response = await http.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        var updated = await response.Content.ReadFromJsonAsync<List<JobRow>>() ?? new();
+        return updated.Count > 0 ? ToJob(updated[0]) : job;
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Delete, $"/rest/v1/jobs?id=eq.{id}&user_id=eq.{session.User.Id}");
+        using var response = await http.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+    }
+
+    private JobWriteRow ToWriteRow(Job job) => new()
+    {
+        UserId = session.User.Id,
+        WorkDate = ParseDate(job.Date),
+        Area = job.Area,
+        Work = job.Work,
+        Amount = job.Amount,
+        Status = job.Status,
+        Source = "windows"
+    };
 
     private static DateOnly ParseDate(string value)
     {
